@@ -32,6 +32,8 @@ const memory = {}
 const spam = {}
 const aiMode = {}
 
+let pairingCodeRequested = false
+
 /* ================= BOT ================= */
 
 async function startBot(){
@@ -45,12 +47,10 @@ version,
 logger: pino({ level:"silent" }),
 auth: state,
 printQRInTerminal:false,
-browser:["Railway Bot","Chrome","1.0"]
+browser:["Ubuntu","Chrome","20.0.04"]
 })
 
 sock.ev.on("creds.update", saveCreds)
-
-let pairingDone = false
 
 /* ================= CONNECTION ================= */
 
@@ -64,9 +64,9 @@ console.log("🔄 Menghubungkan ke WhatsApp...")
 
 /* ================= PAIRING ================= */
 
-if(!sock.authState.creds.registered && !pairingDone){
+if(!sock.authState.creds.registered && !pairingCodeRequested){
 
-pairingDone = true
+pairingCodeRequested = true
 
 setTimeout(async()=>{
 
@@ -80,21 +80,27 @@ console.log(code)
 console.log("==============================\n")
 
 console.log("Masukkan di WhatsApp:")
-console.log("Linked Devices → Pair with Code\n")
+console.log("Linked Devices → Link with phone number\n")
 
 }catch(err){
 
-console.log("PAIRING ERROR:", err)
+console.log("❌ PAIRING ERROR:", err)
+
+pairingCodeRequested = false
 
 }
 
-},3000)
+},2000)
 
 }
+
+/* ================= CONNECTED ================= */
 
 if(connection === "open"){
 console.log("✅ BOT ONLINE")
 }
+
+/* ================= RECONNECT ================= */
 
 if(connection === "close"){
 
@@ -103,10 +109,15 @@ const reason = lastDisconnect?.error?.output?.statusCode
 console.log("❌ Connection closed:", reason)
 
 if(reason !== DisconnectReason.loggedOut){
-console.log("♻️ Reconnect...")
+
+console.log("♻️ Reconnecting bot...")
+pairingCodeRequested = false
 startBot()
+
 }else{
-console.log("⚠️ Device logged out.")
+
+console.log("⚠️ Device logged out, hapus folder auth lalu deploy ulang.")
+
 }
 
 }
@@ -138,7 +149,7 @@ spam[sender]++
 
 setTimeout(()=>{
 spam[sender] = 0
-},5000)
+},4000)
 
 if(spam[sender] > 6){
 
